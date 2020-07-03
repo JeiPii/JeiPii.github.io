@@ -1,19 +1,10 @@
 ---
 layout: page
 title: About me
-subtitle: Why you'd want to go on a date with me
+subtitle: Hacker | Bug Bounty Hunter | Business man
 published: true
 ---
 
-My name is Jean-Pierre Wijn. I created this blog to keep me busy and to further my knowledge of cyber security.I have the following qualities:
+Hi there! My name is **Jean-Pierre Wijn**. I always had an interest in IT since I was 10. I recently got my Application- and media developers degree (July of 2020). Besides 
 
-- I rock a great mustache
-- I'm extremely loyal to my family
-
-What else do you need?
-
-### my history
-
-To be honest, I'm having some trouble remembering right now, so why don't you just watch [my movie](https://en.wikipedia.org/wiki/The_Princess_Bride_%28film%29) and it will answer **all** your questions.
-
-_Thank you for reading!_
+__Thank you for reading!_
