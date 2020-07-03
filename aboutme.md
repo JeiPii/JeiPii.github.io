@@ -7,4 +7,4 @@ published: true
 
 Hi there! My name is **Jean-Pierre Wijn**. I always had an interest in IT since I was 10. I recently got my Application- and media developers degree (July of 2020). Besides 
 
-__Thank you for reading!_
+_Thank you for reading!_
