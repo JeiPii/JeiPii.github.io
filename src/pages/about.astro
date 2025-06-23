@@ -17,13 +17,22 @@ const projects = await getAllProjects()
     <div class="min-w-full">
       <div class="prose mb-8">
         <p class="mt-0">
-        With 5 years of experience across defensive, offensive, and engineering domains, I bring a well-rounded perspective to cybersecurity challenges. Whether it's through penetration testing, defensive strategy, or identifying architectural bottlenecks, my goal is to strengthen and secure your environment with practical, results-driven solutions.
+        I am Jean-Pierre, otherwise known as JP or Jeii_Pii. I've spent 5 years in cybersecurity, mostly on the defensive side. But starting in 2024, I began seriously focusing on offensive security, exploring a wide range of cybersecurity domains along the way.
         </p>
         <p>
         Cybersecurity is more than just a career it's a passion that drives me to continuously learn, experiment, and stay ahead.
         </p>
       </div>
 
+      <h2 class="mb-4 text-2xl font-medium">Certficates</h2>
+          <div class="prose mb-8">
+              <ul class="list-disc">
+                <li>OSCP - <p class="text-muted-foreground text-sm">2025</p></li>
+                <li>CPTS - 2024</li>
+                <li></li>
+                <li></li>
+              </ul>
+          </div>
       <h2 class="mb-4 text-2xl font-medium">Example Projects Listing</h2>
       <div class="flex flex-col gap-4">
         {projects.map((project) => <ProjectCard project={project} />)}
