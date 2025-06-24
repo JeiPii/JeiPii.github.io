@@ -3,7 +3,7 @@ import type { IconMap, SocialLink, Site } from '@/types'
 export const SITE: Site = {
   title: 'jp.log',
   description:
-    'WIP',
+    'jp.log is my personal space to explore, document, and share everything from CTF writeups and pentesting adventures to home lab experiments and cybersecurity notes.',
   href: '#',
   author: 'Jeii_Pii',
   locale: 'en-US',
