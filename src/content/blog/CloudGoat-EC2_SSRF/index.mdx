@@ -48,27 +48,27 @@ So because we are given keys, and because we have access to the console I am lea
 
 # Web GUI
 
-![](/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._i165pp.png)
+![](./Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._i165pp.png)
 
 When you get on the console you will be greeted with a screen similar to mine above. From here we will first search for Lambda
 
-![](/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._g7ucb3.png)
+![](./Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._g7ucb3.png)
 
 If you don't see a button like 
-![](/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._w6t5yf.png)this make sure you are in the correct zone.
+![](./Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._w6t5yf.png)this make sure you are in the correct zone.
 I deployed my cloudgoat in us-east-1 so I can only see these functions there.
-![](/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._uu6sn1.png)
+![](./Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._uu6sn1.png)
 
 This is one of the biggest downsides of the console if you aren't in the correct zone no dice. Which when you are starting out might be an easy win when pentesting. 
 
 Clicking on "manage functions" brings us to the function dashboard.
-![](/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._0rrakr.png)
+![](./Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._0rrakr.png)
 
 from here move to "Configuration" and check out the Environment Function often a place where you can find juicy information.
-![](/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._pbnqhb.png)
+![](./Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._pbnqhb.png)
 
 We find a new pair of Access and Secret keys. This might come over as unprofessional or unrealistic. But this happens more often than not. In AWS the engineers often neglect security.
-![](/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._4cz8db.png)
+![](./Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._4cz8db.png)
 
 If this was a real environment there would've maybe be more to find. But for now thats the console part. We will come back to the console later on.
 
@@ -86,7 +86,7 @@ Default region name [None]: us-east-1
 Default output format [None]: json
 ```
 With `aws stst get-caller-identity --profile` we get to know who we are logged in as. With these credentials we apparently are Solus.
-![](/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF_wz1pbl.png)
+![](./Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF_wz1pbl.png)
 
 Because of the description of the CTF we know that we have ReadOnly to the lambda functions. Normally we should've enumerated for this or we just attempt to list and get lucky that it returns information.
 So lets see what we can list and what we can find.
@@ -145,7 +145,7 @@ In about the middle of the code block we see those credentials that we found in 
 start up Pacu and you hacked AWS already...
 
 Make sure to make a new profile 
-![](/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF_f1ct6b.png)
+![](./Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF_f1ct6b.png)
  
  `import_keys` if you have them saved on your machine. 
 ```
