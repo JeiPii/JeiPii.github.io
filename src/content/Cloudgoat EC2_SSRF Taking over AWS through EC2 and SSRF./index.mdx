@@ -1,0 +1,218 @@
+---
+title: 'Cloudgoat EC2_SSRF Taking over AWS through EC2 and SSRF.'
+description: 'CloudGoat is Rhino Security Labs' "Vulnerable by Design" cloud deployment tool. It allows you to hone your cloud cybersecurity skills by creating and completing several "capture-the-flag" style scenarios.'
+date: 2025-06-20
+tags: ['AWS', 'Pentesting', 'Pentesting', 'SSRF', 'EC2', 'CloudGoat']
+image: './image.png'
+authors: ['Jeii_Pii']
+draft: false
+---
+
+# EC2_SSRF
+
+Difficulty: Medium
+
+Description: Starting as the IAM user Solus, the attacker discovers they have ReadOnly permissions to a Lambda function, where hardcoded secrets lead them to an EC2 instance running a web application that is vulnerable to server-side request forgery (SSRF). After exploiting the vulnerable app and acquiring keys from the EC2 metadata service, the attacker gains access to a private S3 bucket with a set of keys that allow them to invoke the Lambda function and complete the scenario.
+
+Lab activation command: `cloudgoat create ec2_ssrf`
+
+[Visit Scenario Page.](https://github.com/RhinoSecurityLabs/cloudgoat/blob/master/cloudgoat/scenarios/aws/ec2_ssrf/README.md)
+
+---
+
+# The Walkthrough
+
+So it took me about 3 days to complete this machine because I had to step away from the machine on the occasion. This resulted in me having many different access keys and secret keys so to keep things simpele I will just say my Access Key or my Secret key I will show some for example purposes. This is also a CTF that was part of the [Intro to AWS Pentesting course by Tyler Ramsbey on SimplyCyber](https://academy.simplycyber.io/p/introduction-to-aws-pentesting)
+
+Before starting these labs, make sure you have your budget setup on AWS. so that you won't get a surprise bill from Amazon.
+
+We start by activating the lab: `cloudgoat create ec2_ssrf`
+
+From here you get an access en secret key which we instantly setup with the `aws configure --profile` command. 
+## Initial credentials
+```
+[cloudgoat] terraform output completed with no error code.
+cloudgoat_output_solus_access_key_id = AKIAR<REDACTED>
+cloudgoat_output_solus_secret_key = ZtN8P<REDACTED>
+
+┌──(jp㉿SamsungS22)-[~]
+└─$ aws configure --profile ec2_ssrfuser
+AWS Access Key ID [None]: AKIAR<REDACTED>
+AWS Secret Access Key [None]: ZtN8P<REDACTED>
+Default region name [None]: us-east-1
+Default output format [None]: json
+```
+
+## Assumed breach
+So because we are given keys, and because we have access to the console I am leaning that this is an assumed breach scenario. With this in mind there are a couple ways that this machine can be enumerated. For the completeness I will show some AWS WebGUI elements, AWS-CLI enumeration and the Metasploit of AWS Pacu enumeration.
+
+
+# Web GUI
+
+![](../../../7%20-%20attachments/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._i165pp.png)
+
+When you get on the console you will be greeted with a screen similar to mine above. From here we will first search for Lambda
+
+![](../../../7%20-%20attachments/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._g7ucb3.png)
+
+If you don't see a button like 
+![](../../../7%20-%20attachments/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._w6t5yf.png)this make sure you are in the correct zone.
+I deployed my cloudgoat in us-east-1 so I can only see these functions there.
+![](../../../7%20-%20attachments/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._uu6sn1.png)
+
+This is one of the biggest downsides of the console if you aren't in the correct zone no dice. Which when you are starting out might be an easy win when pentesting. 
+
+Clicking on "manage functions" brings us to the function dashboard.
+![](../../../7%20-%20attachments/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._0rrakr.png)
+
+from here move to "Configuration" and check out the Environment Function often a place where you can find juicy information.
+![](../../../7%20-%20attachments/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._pbnqhb.png)
+
+We find a new pair of Access and Secret keys. This might come over as unprofessional or unrealistic. But this happens more often than not. In AWS the engineers often neglect security.
+![](../../../7%20-%20attachments/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF._4cz8db.png)
+
+If this was a real environment there would've maybe be more to find. But for now thats the console part. We will come back to the console later on.
+
+## CLI
+As I learned with OSCP let's first learn to do things by hand and get a good foundation before we move on to shiny and fancy one-stop solutions like Pacu. 
+
+From here we are starting over again from the access and secret we got from cloudgoat itself. 
+
+Let's start by authenticating:
+```
+aws configure --profile ec2_ssrfuser
+AWS Access Key ID [None]: AKIAR<REDACTED>
+AWS Secret Access Key [None]: ZtN8P<REDACTED>
+Default region name [None]: us-east-1
+Default output format [None]: json
+```
+With `aws stst get-caller-identity --profile` we get to know who we are logged in as. With these credentials we apparently are Solus.
+![](../../../7%20-%20attachments/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF_wz1pbl.png)
+
+Because of the description of the CTF we know that we have ReadOnly to the lambda functions. Normally we should've enumerated for this or we just attempt to list and get lucky that it returns information.
+So lets see what we can list and what we can find.
+```
+┌──(jp㉿SamsungS22)-[~]                                   
+└─$ aws lambda list-functions --region us-east-1 --profile ec2_ssrfuser
+{
+    "Functions": [
+        {                                  
+			"FunctionName": "cg-lambda-",     
+			"FunctionArn": "arn:aws:lambda:us-east-1:091303277569:function:cg-lambda-",              
+            "Runtime": "python3.11",
+            "Role": "arn:aws:iam::091303277569:role/cg-lambda-role-cgid2zorxzunfb-service-role",
+            "Handler": "lambda.handler",     
+            "CodeSize": 223,
+            "Description": "Invoke this Lambda function for the win!",
+            "Timeout": 3,                         
+            "MemorySize": 128,                            
+            "LastModified": "2025-06-16T17:43:12.776+0000",
+            "CodeSha256": "jtqUhalhT3taxuZdjeU99/yQTnWVdMQQQcQGhTRrsqI=",
+            "Version": "$LATEST",
+            "Environment": {
+                "Variables": {
+                "EC2_ACCESS_KEY_ID": "AKIAR<REDACTED>",
+                "EC2_SECRET_KEY_ID":"Wm7OR<REDACTED>"
+                }   
+            },
+            "TracingConfig": {                            
+                "Mode": "PassThrough"
+            },                                            
+            "RevisionId": "6ed0d369-1101-497e-8132-bc2d8661ef2a",
+            "PackageType": "Zip",
+            "Architectures": [                                                                                       
+                "x86_64"                                  
+            ],            
+            "EphemeralStorage": {
+                "Size": 512                
+            },                        
+            "SnapStart": {    
+                "ApplyOn": "None",                                                                                   
+                "OptimizationStatus": "Off"
+            },
+            "LoggingConfig": {
+                "LogFormat": "Text",
+                "LogGroup": "/aws/lambda/cg-lambda-"
+            }
+        }                                  
+    ]                                                                                                                
+}    
+```
+In about the middle of the code block we see those credentials that we found in the Web GUI. So lets check how we can do this with Pacu.
+
+> Small tip, the problem with the region could've happened here as well. Where if we picked the wrong region or a engineer for some reason used a completely wrong region we wouldn't have seen any outcome.
+> It it possible to make a bash script that will through all the regions just to be sure. This is automatically done in Pacu, but lets remind ourselves of Murphy' Law and have backup tools and options.
+## Pacu Walkthrough
+start up Pacu and you hacked AWS already...
+
+Make sure to make a new profile 
+![](../../../7%20-%20attachments/Cloudgoat_EC2_SSRF_Taking_over_AWS_through_EC2_and_SSRF_f1ct6b.png)
+ 
+ `import_keys` if you have them saved on your machine. 
+```
+Pacu (solus:No Keys Set) > import_keys ec2_ssrfuser
+  Imported keys as "imported-ec2_ssrfuser"
+Pacu (solus:imported-ec2_ssrfuser) > whoami
+{
+  "UserName": null,
+  "RoleName": null,
+  "Arn": null,
+  "AccountId": null,
+  "UserId": null,
+  "Roles": null,
+  "Groups": null,
+  "Policies": null,
+  "AccessKeyId": "AKIAR<REDACTED>",
+  "SecretAccessKey": "ZtN8P<REDACTED>",
+  "SessionToken": null,
+  "KeyAlias": "imported-ec2_ssrfuser",
+  "PermissionsConfirmed": null,
+  "Permissions": {
+    "Allow": {},
+    "Deny": {}
+  }
+}
+```
+Do a quick search for what Pacu can do with Lambda.
+```
+Pacu (solus:imported-ec2_ssrfuser) > search lambda
+
+[Category: PERSIST]
+
+    Creates a Lambda function and CloudWatch Events rule to backdoor new EC2 security groups.
+
+    Creates a Lambda function and CloudWatch Events rule to backdoor new IAM roles.
+
+    Creates a Lambda function and CloudWatch Events rule to backdoor new IAM users.
+
+  lambda__backdoor_new_roles
+  lambda__backdoor_new_sec_groups
+  lambda__backdoor_new_users
+
+[Category: ENUM]
+
+    Enumerates data from AWS Lambda.
+
+  lambda__enum
+```
+Starting at the beginning make it perform some enumeration of the Lambda function.
+```
+Pacu (solus:imported-ec2_ssrfuser) > run lambda__enum --region us-east-1
+  Running module lambda__enum...
+[lambda__enum] Starting region us-east-1...
+[lambda__enum]   Enumerating data for cg-lambda-cgid2zorxzunfb
+        [+] Secret (ENV): EC2_ACCESS_KEY_ID= AKIAR<REDACTED>
+        [+] Secret (ENV): EC2_SECRET_KEY_ID= Wm7OR<REDACTED>
+[lambda__enum] lambda__enum completed.
+
+[lambda__enum] MODULE SUMMARY:
+
+  1 functions found in us-east-1. View more information in the DB 
+```
+Pacu is very convenient and has a secrets scanner build in. So the access and secret key are highlighted in the terminal.
+
+From here we see that all the steps we did before have been condensed to basicaly one command in Pacu.
+
+---
+The credentials lead to a user called wrex which has access to EC2.
+So now we need to continue with wRex.
